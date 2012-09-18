@@ -19,13 +19,11 @@ class Player
   end
 
   def actions(warrior)
-    wall?(warrior)
+    examine_env(warrior)
     rescue_captive(warrior)
-    swing_sword(warrior)
     shoot_bow(warrior)
-    back_away(warrior)
-    safe_rest(warrior)
-    walk_forward!(warrior)
+    walk_forward!(warrior) unless safe_rest(warrior)
+
   end
 
 
@@ -38,7 +36,17 @@ class Player
   end
 
   def shoot_bow(warrior)
-    return warrior.shoot!
+    return warrior.shoot! unless @env[:forward].include? "Captive"
+  end
+
+  def examine_env(warrior)
+    @env = {}
+    @env[:forward] = warrior.look.map! do |elem|
+      elem.name
+    end
+    @env[:backward] = warrior.look(:backward).map! do |elem|
+      elem.name
+    end
   end
 
   def rescue_captive(warrior)
@@ -48,7 +56,7 @@ class Player
 
   def swing_sword(warrior)
     return warrior.attack! if !warrior.feel.empty? and !warrior.feel.captive?
-    return warrior.attack!(:backward) if !warrior.feel(:backward).empty? and !warrior.feel(:backward).captive?
+    return warrior.attack!(:backward) if !warrior.feel(:backward).empty? and !warrior.feel(:backward).captive? and !warrior.feel(:backward).wall?
   end
 
   def safe_rest(warrior)
@@ -61,14 +69,6 @@ class Player
 
   def end_turn_check(warrior)
     @prev_health = warrior.health
-  end
-
-  def hurt?
-    warrior.health < @max_health
-  end
-
-  def maimed?
-    warrior.health < 10
   end
 
 end
